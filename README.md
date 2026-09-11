@@ -1,127 +1,141 @@
-# 🚀 SAP S/4HANA AI Procurement & PO Management System
-> **LLM + Grounded RAG Based Procurement Intelligence for SAP S/4HANA**
+# SAP S/4HANA AI Procurement & Purchase Order Management System
 
-[![SAP S/4HANA](https://img.shields.io/badge/SAP-S%2F4HANA_2020%2B-0A6ED1?style=for-the-badge&logo=sap)](https://sap.com)
-[![ABAP OO](https://img.shields.io/badge/ABAP-Object_Oriented-354A5F?style=for-the-badge)](https://sap.com)
-[![CDS Views](https://img.shields.io/badge/SAP_CDS-Code_Pushdown-008080?style=for-the-badge)](https://sap.com)
-[![OData V2](https://img.shields.io/badge/SAP_Gateway-OData_V2-FF6600?style=for-the-badge)](https://sap.com)
-[![SAP Fiori](https://img.shields.io/badge/UI5-SAP_Fiori_Horizon-0A6ED1?style=for-the-badge&logo=sap)](https://sap.com)
-[![RAG AI](https://img.shields.io/badge/AI Engine-Grounded_RAG-4B32C3?style=for-the-badge)](https://github.com)
+A full-stack enterprise SAP procurement intelligence application built on **SAP S/4HANA (ABAP OO + CDS Views + RAP OData V2)** integrated with **SAP Fiori UI5** and an **LLM + RAG Procurement Assistant**.
+
+Developed and tested live on an active SAP S/4HANA server environment.
 
 ---
 
-## 📌 Project Overview
+## 💡 Motivation & Problem Statement
 
-In enterprise procurement operations, buyers and managers frequently handle complex workflows involving **Vendors**, **Purchase Requisitions (PR)**, **Purchase Orders (PO)**, **Goods Receipts (GR)**, and **Corporate SLA Policies**. Investigating delayed orders or identifying penalty waivers requires navigating multiple SAP transactions (`ME23N`, `MIGO`, `SE11`, `SE24`) and dense SOP PDFs.
+In enterprise supply chains, procurement teams handle large volumes of transactional data across Purchase Orders (POs), Goods Receipts (GRs), and Vendor Scorecards. Identifying why a specific PO is delayed or determining applicable vendor penalty clauses traditionally requires switching between multiple SAP transactions (`ME23N`, `MIGO`, `SE11`, `SE24`) and navigating offline SLA policy documents.
 
-This repository provides an **End-to-End Enterprise Solution**:
-1. **SAP Core Layer**: Implemented in native ABAP OO, S/4HANA CDS Views (Code Pushdown), and RAP/OData V2 services registered in SAP Gateway (`/n/IWFND/MAINT_SERVICE`).
-2. **AI Intelligence Layer**: Powered by a **Grounded Retrieval-Augmented Generation (RAG)** engine that parses SAP transactional data alongside indexed enterprise SLA policy documents (`delivery_policy.md`, `vendor_management_sop.md`), delivering **100% fact-based responses without AI hallucination**.
-3. **SAP Fiori UI5 Dashboard**: Production-grade UI featuring real-time KPI tiles, PO directory tables, vendor risk scorecards, automated PDF penalty export, and an interactive AI assistant drawer.
+I designed and built this system to bridge SAP transactional data with enterprise policy documentation:
+- **SAP S/4HANA Core**: Core procurement logic, delay calculation, and vendor scoring implemented using ABAP OO, HANA Code Pushdown CDS Views, and OData V2 services.
+- **RAG & AI Layer**: A Node.js middleware server that indexes corporate procurement SOPs, fetches live SAP OData transactional evidence, and provides fact-based analysis without AI hallucination.
+- **Frontend Layer**: A responsive SAP Fiori Horizon UI5 dashboard featuring KPI tiles, searchable PO directory tables, vendor risk matrices, and a 1-click formal SLA Audit PDF exporter.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture & Workflow
 
 ```
-                  USER (Procurement Manager / Analyst)
-                                 │
-                                 ▼
-                     SAP Fiori UI5 Dashboard
-        (KPI Tiles | PO Directory | Vendor Scorecards | PDF Export)
-                                 │
-                   ┌─────────────┴─────────────┐
-                   ▼                           ▼
-         OData V2 REST Service         Grounded RAG Engine
-      (SAP Gateway / Node Server)   (SOP Document Vector Index)
-                   │                           │
-         ┌─────────┴─────────┐        ┌────────┴────────┐
-         ▼                   ▼        ▼                 ▼
-   SAP S/4HANA          ABAP OO   Indexed SOP      Grounded
-   CDS Views            Classes   Policy Docs      AI Prompts
- (ZI_PROCUREMENT)    (ZCL_PROC...) (delivery_policy) (No Hallucination)
+                                USER (Procurement Analyst / Buyer)
+                                                │
+                                                ▼
+                                    SAP Fiori Horizon UI5 App
+                       (Dashboard KPIs | PO Directory | Vendor Scorecards)
+                                                │
+                   ┌────────────────────────────┴────────────────────────────┐
+                   ▼                                                         ▼
+         SAP Gateway OData V2                                    Node.js RAG Middleware
+  (/sap/opu/odata/sap/ZC_PROCUREMENT_ANALYTICS_CDS)             (Semantic Index & Evidence Grounding)
+                   │                                                         │
+         ┌─────────┴─────────┐                                      ┌────────┴────────┐
+         ▼                   ▼                                      ▼                 ▼
+  SAP S/4HANA CDS       ABAP OO Class                            Corporate SOP    Grounded Response
+ (ZI_PROCUREMENT_DATA) (ZCL_PROCUREMENT_ANALYSIS)                Policy Documents  Synthesis (No AI
+                                                                 (delivery_policy)   Hallucination)
 ```
 
 ---
 
-## ⚡ Key Features & 12-Phase Lifecycle
+## 🛠️ SAP Backend Specs & Technical Objects
 
-- **Phase 1: Business Flow & SLA Formula**: Formal delay calculation ($\text{Actual Date} - \text{Expected Date}$) and SLA thresholds.
-- **Phase 2 & 3: Data Dictionary (DDIC)**: Custom transparent tables `ZPO_HEADER`, `ZPO_ITEM`, `ZGOODS_RECEIPT`, and `ZVENDOR_SCORE` created & activated in `SE11`.
-- **Phase 4: Sample Data Population**: Executable report `ZPOPULATE_PROCUREMENT_DATA` populates test datasets with on-time, delayed, and overdue orders.
-- **Phase 5 & 6: ABAP OO Business Logic**: `ZCL_PROCUREMENT_ANALYSIS` class and `ZPROCUREMENT_ANALYSIS_REPORT` for ALV color-coded delay analysis.
-- **Phase 7: S/4HANA CDS Views**: Code Pushdown Interface View (`ZI_PROCUREMENT_DATA`) and Consumption View (`ZC_PROCUREMENT_ANALYTICS`) with Fiori UI annotations.
-- **Phase 8: OData Service Exposure**: Registered service `ZC_PROCUREMENT_ANALYTICS_CDS` in `/n/IWFND/MAINT_SERVICE` and verified live with **`HTTP 200 OK`**.
-- **Phase 9: SAP Fiori UI5 Integration**: Dynamic dashboard with search, status filter, and line-item details modal.
-- **Phase 10: RAG Knowledge Base Indexing**: Semantic chunking of corporate SOPs (`delivery_policy.md`, `vendor_management_sop.md`, `po_approval_policy.md`).
-- **Phase 11: Grounded RAG AI Assistant**: Fact-based AI query pipeline generating responses with empirical SAP evidence and SOP citations.
-- **Phase 12: SLA Penalty PDF Report Export**: 1-Click print-ready SAP SLA Audit & Penalty PDF report generator with automated deduction calculations.
+### 1. Data Dictionary (`SE11`)
+Designed and activated custom transparent tables for procurement operations:
+- `ZPO_HEADER`: Purchase order header details (PO ID, Vendor ID, Order Date, Expected Date, Status, Total Amount, Currency).
+- `ZPO_ITEM`: Purchase order line items (Item ID, Material ID, Description, Quantity, Unit Price, Net Value).
+- `ZGOODS_RECEIPT`: Goods receipt posting log (GR ID, PO ID, GR Date, Received Qty, Received By, Remarks).
+- `ZVENDOR_SCORE`: Vendor evaluation scorecard metrics (On-time percentage, Average delay days, Risk category).
 
----
+### 2. Business Logic Class (`SE24` & `SE38`)
+- **Class `ZCL_PROCUREMENT_ANALYSIS`**: Implemented Open SQL queries and methods for delay calculation (`Actual GR Date - Expected Date`) and vendor performance scoring.
+- **Report `ZPROCUREMENT_ANALYSIS_REPORT`**: Executable driver report producing ALV color-coded output (Green = On-time, Yellow = 1-2 days delay, Red = 3+ days delay).
 
-## 💻 Tech Stack & SAP Objects
+### 3. S/4HANA Core Data Services (`Eclipse ADT`)
+- **Interface View (`ZI_PROCUREMENT_DATA`)**: Basic CDS data model utilizing SAP HANA `dats_days_between` function for database-level code pushdown.
+- **Consumption View (`ZC_PROCUREMENT_ANALYTICS`)**: User-facing CDS view with UI annotations (`@UI.lineItem`, `@UI.selectionField`, `@Search.searchable`) and `@OData.publish: true`.
 
-### Backend & SAP ABAP Core
-- **Database Tables**: `ZPO_HEADER`, `ZPO_ITEM`, `ZGOODS_RECEIPT`, `ZVENDOR_SCORE`
-- **OO Class**: `ZCL_PROCUREMENT_ANALYSIS` (`SE24`)
-- **Executable Report**: `ZPROCUREMENT_ANALYSIS_REPORT` (`SE38`)
-- **Core Data Services**: `ZI_PROCUREMENT_DATA.cds` (Basic View), `ZC_PROCUREMENT_ANALYTICS.cds` (Consumption View)
-- **OData Registration**: `/n/IWFND/MAINT_SERVICE` (`ZC_PROCUREMENT_ANALYTICS_CDS`)
-
-### Frontend & AI Middleware
-- **Frontend**: HTML5, CSS3 (SAP Fiori Horizon Design System), Vanilla JS (ES6+)
-- **Middleware**: Node.js, Express.js, CORS
-- **AI RAG Engine**: Custom Semantic Text Chunking & Vector/Keyword Similarity Index
+### 4. OData Service Registration (`/n/IWFND/MAINT_SERVICE`)
+- Activated and registered technical service `ZC_PROCUREMENT_ANALYTICS_CDS` in SAP Gateway Service Builder catalog.
+- Verified live HTTP response code `200 OK` via SAP Gateway Client (`F8`).
 
 ---
 
-## 🚀 Quick Setup & Installation Guide
+## 🧠 AI RAG Engine & Grounding Architecture
+
+### Why RAG over Direct LLM Prompts?
+Directly asking a generic LLM about internal SAP purchase order delays causes hallucination because the LLM lacks access to private SAP database tables and company SLA guidelines. 
+
+### RAG Pipeline Design:
+1. **Document Chunking**: Corporate SOPs (`delivery_policy.md`, `vendor_management_sop.md`, `po_approval_policy.md`) are split into 14 semantic chunks.
+2. **Context Retrieval**: When a query (e.g., *"Why was PO 45000103 delayed?"*) is submitted, the engine extracts the PO ID, fetches live SAP database records, and matches the relevant policy clause.
+3. **Fact-Based Response**: Synthesizes a grounded output citing empirical SAP evidence alongside formal policy guidelines.
+
+---
+
+## 📂 Project Structure
+
+```
+├── client/
+│   ├── index.html           # SAP Fiori Horizon Dashboard UI
+│   ├── app.js               # Frontend Controller, OData fetch & PDF generator
+│   └── style.css            # Custom SAP Fiori Horizon Design System styles
+├── sap-abap-core/
+│   ├── ZDDIC_DEFINITIONS.abap             # DDIC transparent table definitions
+│   ├── ZCL_PROCUREMENT_ANALYSIS.abap      # OO ABAP business logic class
+│   ├── ZPROCUREMENT_ANALYSIS_REPORT.abap # Executable ALV report
+│   ├── ZI_PROCUREMENT_DATA.cds           # Interface CDS View (HANA Pushdown)
+│   ├── ZC_PROCUREMENT_ANALYTICS.cds       # Consumption CDS View with UI Annotations
+│   └── ZUI_PROCUREMENT_ANALYTICS.srvd     # RAP Service Definition
+├── knowledge-base/
+│   ├── delivery_policy.md                 # SLA & Vendor Penalty Guidelines
+│   ├── vendor_management_sop.md           # Vendor Risk Matrix & Scoring SOP
+│   └── po_approval_policy.md              # PO Approval Thresholds & 3-Way Match
+├── server/
+│   ├── server.js            # Express API server (OData Mock & RAG endpoints)
+│   ├── rag_engine.js        # Vector/Keyword RAG search engine
+│   └── data.js              # SAP procurement dataset
+└── README.md
+```
+
+---
+
+## 🚀 Running the Application Locally
 
 ### Prerequisites
-- Node.js (v16.x or higher)
-- Git
+- Node.js (v16.0+)
+- npm
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/Vaibhavtripathi24/SAP-AI-Procurement-PO-Management-System.git
-cd SAP-AI-Procurement-PO-Management-System
-```
+### Setup Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Vaibhavtripathi24/SAP-AI-Procurement-PO-Management-System.git
+   cd SAP-AI-Procurement-PO-Management-System
+   ```
 
-### 2. Install Dependencies & Start Server
-```bash
-cd server
-npm install
-npm start
-```
+2. Install dependencies:
+   ```bash
+   cd server
+   npm install
+   ```
 
-### 3. Open Web Dashboard
-Navigate to `http://localhost:4000` in Google Chrome or Microsoft Edge.
+3. Start the backend server:
+   ```bash
+   npm start
+   ```
 
----
-
-## 🤖 Sample AI RAG Prompts & Grounded Outputs
-
-### Prompt 1: `Why was PO 45000103 delayed?`
-- **Grounded Evidence**: PO 45000103 from vendor *Global Logistics & Steel Corp (V003)* was delayed by **7 days** (Expected: 15.08.2026, Actual: 22.08.2026). GR Remark: *"Severe 7-day delay. Port congestion in Rotterdam."*
-- **SOP Citation**: `delivery_policy.md (Section 3: Vendor Penalties & Compensation)`
-- **Action**: Applies 1.5%/week invoice penalty deduction ($510.00 USD) and 15-point vendor score reduction.
+4. Open your browser and navigate to:
+   ```
+   http://localhost:4000
+   ```
 
 ---
 
-## 📄 SAP SLA Audit & Penalty PDF Report
-Clicking **`📄 Export Penalty PDF`** generates an official audit report:
-- Document ID: `SLA-AUDIT-45000103-XXXX`
-- Breakdown of `ZPO_ITEM` line items
-- Applied SLA Penalty Rate & Net Payable Calculation
-- Formal Executive Signature Blocks for Procurement Lead & CPO
+## 📄 License
+This project is open-source under the [MIT License](LICENSE).
 
 ---
-
-## 📜 License
-Distributed under the MIT License. See `LICENSE` for details.
-
----
-
-### 👨‍💻 Developer & Maintainer
-**Vaibhav Tripathi** — SAP ABAP & S/4HANA AI Developer  
-*Built & Verified Live on SAP S/4HANA Server*
+**Author**: Vaibhav Tripathi  
+*SAP S/4HANA ABAP & Fiori Developer*

@@ -770,3 +770,162 @@ body {
   font-size: 13px;
   line-height: 1.6;
 }
+
+/* --------------------------------------------------------------------------
+   FLOATING AI ACTION BUTTON (MOBILE & TOUCH)
+   -------------------------------------------------------------------------- */
+.ai-fab-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 150;
+  background: linear-gradient(135deg, #0a6ed1, #4b32c3);
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(10, 110, 209, 0.45);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease;
+}
+
+.ai-fab-btn:active {
+  transform: scale(0.95);
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE & TABLET RESPONSIVE STYLES
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .sap-fiori-header {
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-left {
+    gap: 10px;
+  }
+
+  .system-title h1 {
+    font-size: 15px;
+  }
+
+  .system-subtitle {
+    display: none;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .ai-toggle-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .sap-tab-bar {
+    padding: 0 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    padding: 12px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .main-container {
+    padding: 16px 12px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+  }
+
+  .section-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .alert-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .alert-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .alert-actions .btn {
+    width: 100%;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .toolbar-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .filter-group select {
+    width: 100%;
+  }
+
+  .vendor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .code-viewer-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+  }
+
+  .code-tab-btn {
+    flex-shrink: 0;
+  }
+
+  /* Full screen width AI drawer on mobile screens */
+  .ai-drawer {
+    width: 100vw;
+    right: -100vw;
+  }
+
+  .modal-card {
+    width: 96%;
+    max-height: 90vh;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .ai-fab-btn {
+    display: flex;
+  }
+}
+

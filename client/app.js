@@ -450,6 +450,11 @@ function sendPresetQuery(query) {
   submitAiQuery(query);
 }
 
+function toggleAiDrawerFromFab() {
+  const drawer = document.getElementById('aiDrawer');
+  drawer.classList.toggle('open');
+}
+
 function askAiAboutPo(poId) {
   sendPresetQuery(`Why was PO ${poId} delayed?`);
 }
@@ -578,10 +583,25 @@ function executeClientSideRAG(query) {
       { document_name: "Vendor Management SOP", file: "vendor_management_sop.md", section: "Section 3: Risk Level Definitions", snippet: "HIGH RISK: Restricted vendor status. Corrective Action Plan mandatory within 7 days." }
     ];
   } else {
-    answerText = `Based on SAP Procurement Policies & SOPs: All Purchase Orders require 3-way matching between PO, Goods Receipt, and Invoice Receipt. Delivery delays exceeding 5 days trigger exception reviews.`;
-    sources = [
-      { document_name: "Delivery Policy", file: "delivery_policy.md", section: "Section 2: Delay Calculation & Grace Period", snippet: "Delay Days = Actual Delivery Date - Expected Delivery Date." }
-    ];
+    const lowerQuery = query.toLowerCase();
+    if (lowerQuery.includes('hi') || lowerQuery.includes('hello') || lowerQuery.includes('help')) {
+      answerText = `Hello! I am your <strong>SAP S/4HANA AI Procurement Assistant</strong>. I am linked directly to your SAP database and enterprise SOP policy documents.<br><br>You can ask me questions like:<br>• <em>"Why was PO 45000103 delayed?"</em><br>• <em>"Which vendors are tagged as HIGH RISK?"</em><br>• <em>"What penalties apply to vendor V003?"</em>`;
+      sources = [
+        { document_name: "Delivery Policy", file: "delivery_policy.md", section: "Section 2: Delay Calculation & Grace Period", snippet: "Delay Days = Actual Delivery Date - Expected Delivery Date." }
+      ];
+    } else if (lowerQuery.includes('delayed') || lowerQuery.includes('delay')) {
+      const delayedPOs = STANDALONE_SAP_DATA.pos.filter(p => p.delay_days > 2);
+      answerText = `There are currently <strong>${delayedPOs.length} Purchase Orders</strong> with significant delivery delays in SAP S/4HANA: ${delayedPOs.map(p => `PO ${p.po_id} (${p.delay_days} days late)`).join(', ')}.<br><br>Ask about any specific PO ID to view full grounded SAP evidence and SLA penalty rules.`;
+      evidence = delayedPOs.map(p => ({ key: `PO ${p.po_id}`, value: `${p.vendor_name} (${p.delay_days} days late)` }));
+      sources = [
+        { document_name: "Delivery Policy", file: "delivery_policy.md", section: "Section 3: Vendor Penalties & Compensation", snippet: "Delays exceeding 5 days incur a 1.5%/week penalty deduction." }
+      ];
+    } else {
+      answerText = `Based on SAP Procurement Policies & SOPs: All Purchase Orders require 3-way matching between PO, Goods Receipt, and Invoice Receipt. Delivery delays exceeding 5 days trigger exception reviews.`;
+      sources = [
+        { document_name: "Delivery Policy", file: "delivery_policy.md", section: "Section 2: Delay Calculation & Grace Period", snippet: "Delay Days = Actual Delivery Date - Expected Delivery Date." }
+      ];
+    }
   }
 
   return { query, answer: answerText, evidence, sources };

@@ -151,8 +151,24 @@ class RAGEngine {
     }
     // Case 3: General Policy / Procurement Query
     else {
-      if (retrievedDocs.length > 0) {
-        answerText = `Based on the SAP Procurement Policy and SOP documentation: ${retrievedDocs[0].content.substring(0, 350)}...`;
+      const lowerQuery = query.toLowerCase();
+      if (lowerQuery.includes('hi') || lowerQuery.includes('hello') || lowerQuery.includes('help')) {
+        answerText = `Hello! I am your **SAP S/4HANA AI Procurement Assistant**. I am linked directly to your SAP database and enterprise SOP policy documents.\n\nYou can ask me questions like:\n• *"Why was PO 45000103 delayed?"*\n• *"Which vendors are tagged as HIGH RISK?"*\n• *"What penalties apply to vendor V003?"*`;
+        evidence = [];
+        sources = [
+          {
+            document_name: "Delivery Policy",
+            file: "delivery_policy.md",
+            section: "Section 2: Delay Calculation & Grace Period",
+            snippet: "Delay Days = Actual Delivery Date - Expected Delivery Date."
+          }
+        ];
+      } else if (lowerQuery.includes('delayed') || lowerQuery.includes('delay')) {
+        const delayedPOs = PURCHASE_ORDERS.filter(p => p.delay_days > 2);
+        answerText = `There are currently **${delayedPOs.length} Purchase Orders** with significant delivery delays in SAP S/4HANA: ${delayedPOs.map(p => `PO ${p.po_id} (${p.delay_days} days late)`).join(', ')}.\n\nAsk about any specific PO ID to view full grounded SAP evidence and SLA penalty rules.`;
+        evidence = delayedPOs.map(p => ({ key: `PO ${p.po_id}`, value: `${p.vendor_name} (${p.delay_days} days late)` }));
+      } else if (retrievedDocs.length > 0) {
+        answerText = `Based on the SAP Procurement Policy and SOP documentation:\n\n${retrievedDocs[0].content.substring(0, 350)}...`;
       } else {
         answerText = `I have analyzed your procurement query across the SAP database and policy documents. Please specify a PO Number (e.g. 45000103) or Vendor ID (e.g. V003) for detailed grounded evidence.`;
       }

@@ -73,9 +73,9 @@ CLASS zcl_procurement_analysis IMPLEMENTATION.
            h~status,
            h~total_amount,
            h~currency
-      FROM zpo_header AS h
-      LEFT OUTER JOIN zgoods_receipt AS g ON h~po_id = g~po_id
-      LEFT OUTER JOIN zvendor_score AS s  ON h~vendor_id = s~vendor_id
+      FROM zai_po_header AS h
+      LEFT OUTER JOIN zai_goods_rec AS g ON h~po_id = g~po_id
+      LEFT OUTER JOIN zai_vendor_score AS s ON h~vendor_id = s~vendor_id
       WHERE ( iv_po_id IS INITIAL OR h~po_id = @iv_po_id )
       INTO TABLE @DATA(lt_raw_po).
 

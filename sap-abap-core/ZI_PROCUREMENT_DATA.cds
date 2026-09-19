@@ -1,12 +1,12 @@
-@AbapCatalog.sqlViewName: 'ZIPROCUREMENT'
+@AbapCatalog.sqlViewName: 'ZAIIPROCUREMENT'
 @AbapCatalog.compiler.compareFilter: true
 @AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Core Interface CDS View for Procurement Data'
-define view ZI_PROCUREMENT_DATA
-  as select from zpo_header as Header
-  left outer join zgoods_receipt as Receipt on Header.po_id = Receipt.po_id
-  left outer join zvendor_score  as Vendor  on Header.vendor_id = Vendor.vendor_id
+define view ZAI_I_PROCUREMENT_DATA
+  as select from zai_po_header as Header
+  left outer join zai_goods_rec   as Receipt on Header.po_id = Receipt.po_id
+  left outer join zai_vendor_score as Vendor  on Header.vendor_id = Vendor.vendor_id
 {
   key Header.po_id         as PurchaseOrder,
       Header.vendor_id     as VendorID,
@@ -19,19 +19,11 @@ define view ZI_PROCUREMENT_DATA
       Header.currency      as Currency,
       
       /* Calculated Field: Delivery Delay in Days */
-      case 
-        when Receipt.gr_date > Header.expected_date 
-        then dats_days_between(Header.expected_date, Receipt.gr_date)
-        else 0
-      end                  as DelayDays,
+      dats_days_between(Header.expected_date, Receipt.gr_date) as DelayDays,
       
       /* Risk Evaluation */
-      case
-        when Receipt.gr_date > Header.expected_date 
-             and dats_days_between(Header.expected_date, Receipt.gr_date) > 5
-        then 'HIGH_RISK'
-        when Receipt.gr_date > Header.expected_date
-        then 'MODERATE'
+      case Header.status
+        when 'DELAYED' then 'HIGH_RISK'
         else 'LOW'
       end                  as RiskCategory
 }

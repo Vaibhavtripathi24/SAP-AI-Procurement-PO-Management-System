@@ -186,11 +186,24 @@ body {
   font-weight: 600;
   color: var(--sap-text-secondary);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.tab-btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.tab-btn span {
+  display: inline-block;
+  line-height: 1;
 }
 
 .tab-btn:hover {
@@ -403,13 +416,42 @@ body {
 .badge.info-badge { background: var(--sap-blue-light); color: var(--sap-blue); }
 
 .btn {
-  padding: 6px 12px;
+  padding: 7px 14px;
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  vertical-align: middle;
+  line-height: 1;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.btn span {
+  display: inline-block;
+  line-height: 1;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .btn-primary { background: var(--sap-blue); color: #fff; }

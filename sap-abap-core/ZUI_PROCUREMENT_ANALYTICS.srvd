@@ -1,5 +1,5 @@
 @EndUserText.label: 'Service Definition for Procurement Intelligence RAP BO'
 define service ZUI_PROCUREMENT_ANALYTICS {
-  expose ZC_PROCUREMENT_ANALYTICS as ProcurementAnalytics;
-  expose ZI_PROCUREMENT_DATA      as CoreProcurement;
+  expose ZAI_C_PROCUREMENT_ANALYTICS as ProcurementAnalytics;
+  expose ZAI_I_PROCUREMENT_DATA      as CoreProcurement;
 }

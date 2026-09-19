@@ -130,6 +130,7 @@ const STANDALONE_SAP_DATA = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  checkSapStatus();
   initTabs();
   initAiDrawer();
   fetchDashboardSummary();
@@ -137,6 +138,39 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchVendorScorecards();
   initCodeViewer();
 });
+
+async function checkSapStatus() {
+  try {
+    const res = await fetch('/api/sap/status');
+    if (!res.ok) return;
+    const data = await res.json();
+    const badge = document.getElementById('sap-mode-badge');
+    const banner = document.getElementById('sap-mode-banner');
+    if (data.mode === 'REAL_SAP') {
+      if (badge) {
+        badge.textContent = '[REAL_SAP CONNECTED]';
+        badge.className = 'badge success-badge';
+      }
+      if (banner) {
+        banner.style.background = '#f6ffed';
+        banner.style.borderColor = '#b7eb8f';
+        banner.style.borderLeftColor = '#52c41a';
+        banner.style.color = '#135200';
+        banner.innerHTML = `<strong>✅ Live SAP System Connected:</strong> OData service active on <code>${data.sap_host}${data.service_path}</code> (User: <code>${data.authenticated_user}</code>).`;
+      }
+    } else {
+      if (badge) {
+        badge.textContent = '[DEVELOPMENT_MOCK_MODE]';
+        badge.className = 'badge warning-badge';
+      }
+      if (banner) {
+        banner.innerHTML = `<strong>ℹ️ SAP Gateway Status:</strong> System is running in <code style="background: #fff0f6; padding: 2px 6px; border-radius: 4px; color: #c41d7f;">DEVELOPMENT_MOCK_MODE</code> (Local Fallback Mode). To connect to live SAP Gateway, configure host & credentials in <code style="background: #f5f5f5; padding: 2px 4px;">server/.env</code>.`;
+      }
+    }
+  } catch (err) {
+    console.log('Running in standalone static mode.');
+  }
+}
 
 // TAB NAVIGATION
 function initTabs() {
@@ -198,6 +232,11 @@ async function fetchPurchaseOrders() {
   document.getElementById('searchInput').addEventListener('input', filterPos);
 }
 
+function formatPoAmount(val) {
+  const num = typeof val === 'number' ? val : parseFloat(val || 0);
+  return isNaN(num) ? '0.00' : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function renderPoTable(pos) {
   const tbody = document.getElementById('poTableBody');
   tbody.innerHTML = '';
@@ -205,22 +244,33 @@ function renderPoTable(pos) {
 
   pos.forEach(po => {
     const tr = document.createElement('tr');
+    const delayDays = parseInt(po.delay_days || 0, 10);
     let statusClass = 'success-badge';
-    if (po.delay_days > 5) statusClass = 'danger-badge';
-    else if (po.delay_days > 0) statusClass = 'warning-badge';
+    if (delayDays > 5) statusClass = 'danger-badge';
+    else if (delayDays > 0) statusClass = 'warning-badge';
+
+    const formattedAmount = formatPoAmount(po.total_amount);
 
     tr.innerHTML = `
       <td><strong>${po.po_id}</strong></td>
-      <td>${po.vendor_name} <br><small class="text-secondary">${po.vendor_id}</small></td>
-      <td>${po.po_date}</td>
-      <td>${po.expected_date}</td>
+      <td>${po.vendor_name || 'N/A'} <br><small class="text-secondary">${po.vendor_id || ''}</small></td>
+      <td>${po.po_date || 'N/A'}</td>
+      <td>${po.expected_date || 'N/A'}</td>
       <td>${po.actual_date || '<span class="badge warning-badge">Pending</span>'}</td>
-      <td><strong>${po.delay_days} Days</strong></td>
-      <td>$${po.total_amount.toLocaleString()} ${po.currency}</td>
-      <td><span class="badge ${statusClass}">${po.status}</span></td>
+      <td><strong>${delayDays} Days</strong></td>
+      <td>$${formattedAmount} ${po.currency || 'USD'}</td>
+      <td><span class="badge ${statusClass}">${po.status || 'UNKNOWN'}</span></td>
       <td>
-        <button class="btn btn-secondary" onclick="viewPoDetail('${po.po_id}')">Details</button>
-        <button class="btn btn-primary" onclick="askAiAboutPo('${po.po_id}')">AI RAG</button>
+        <div class="action-cell">
+          <button class="btn btn-secondary btn-sm" onclick="viewPoDetail('${po.po_id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>Details</span>
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="askAiAboutPo('${po.po_id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+            <span>AI RAG</span>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -308,7 +358,7 @@ function viewPoDetail(poId) {
       </div>
       <div>
         <span style="color: var(--sap-text-secondary); font-size: 11px;">NET ORDER VALUE</span><br>
-        <strong style="font-size: 15px; color: var(--sap-navy);">$${po.total_amount.toLocaleString()} ${po.currency}</strong>
+        <strong style="font-size: 15px; color: var(--sap-navy);">$${formatPoAmount(po.total_amount)} ${po.currency || 'USD'}</strong>
       </div>
       <div>
         <span style="color: var(--sap-text-secondary); font-size: 11px;">STATUS / DELAY</span><br>
@@ -644,9 +694,10 @@ function exportPoPenaltyReport(poId) {
   }
 
   const penaltyRate = 1.5; // 1.5% per week
-  const penaltyAmount = ((po.total_amount * penaltyRate) / 100).toFixed(2);
-  const netPayable = (po.total_amount - parseFloat(penaltyAmount)).toFixed(2);
-  const scoreDeduction = po.delay_days > 5 ? 15 : 5;
+  const totalAmt = typeof po.total_amount === 'number' ? po.total_amount : parseFloat(po.total_amount || 0);
+  const penaltyAmount = ((totalAmt * penaltyRate) / 100).toFixed(2);
+  const netPayable = (totalAmt - parseFloat(penaltyAmount)).toFixed(2);
+  const scoreDeduction = (po.delay_days || 0) > 5 ? 15 : 5;
 
   const printWin = window.open('', '_blank', 'width=900,height=800');
   if (!printWin) {

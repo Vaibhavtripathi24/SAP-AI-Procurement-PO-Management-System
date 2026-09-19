@@ -1,19 +1,15 @@
-@AbapCatalog.sqlViewName: 'ZCPROCUREMENT'
+@AbapCatalog.sqlViewName: 'ZAICPROCUREMENT'
 @AbapCatalog.compiler.compareFilter: true
 @AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Consumption View for Procurement Analytics App'
 @Metadata.allowExtensions: true
 @Search.searchable: true
+@OData.publish: true
 
-define view ZC_PROCUREMENT_ANALYTICS
-  as select from ZI_PROCUREMENT_DATA
+define view ZAI_C_PROCUREMENT_ANALYTICS
+  as select from ZAI_I_PROCUREMENT_DATA
 {
-  @UI.facet: [
-    { id: 'HeaderFacet', type: #HEADER_REFERENCE, targetElement: '_Vendor' },
-    { id: 'LineItems', type: #LINEITEM_REFERENCE, position: 10 }
-  ]
-
   @UI.lineItem: [{ position: 10, importance: #HIGH, label: 'PO Number' }]
   @Search.defaultSearchElement: true
   key PurchaseOrder,
@@ -31,7 +27,7 @@ define view ZC_PROCUREMENT_ANALYTICS
   @UI.lineItem: [{ position: 50, label: 'Actual Date' }]
   ActualDeliveryDate,
 
-  @UI.lineItem: [{ position: 60, criticality: 'DelayDays', label: 'Delay (Days)' }]
+  @UI.lineItem: [{ position: 60, label: 'Delay (Days)' }]
   DelayDays,
 
   @UI.lineItem: [{ position: 70, importance: #HIGH, label: 'Status' }]

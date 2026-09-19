@@ -81,12 +81,14 @@ class RAGEngine {
   }
 
   // Find SAP Data Evidence
-  extractSAPContext(query) {
+  extractSAPContext(query, liveSapPOs = null) {
+    const posToSearch = (liveSapPOs && Array.isArray(liveSapPOs) && liveSapPOs.length > 0) ? liveSapPOs : PURCHASE_ORDERS;
+
     // Check if prompt references a specific PO Number (e.g. 45000103)
     const poMatch = query.match(/45000\d{3}/);
     let targetPO = null;
     if (poMatch) {
-      targetPO = PURCHASE_ORDERS.find(p => p.po_id === poMatch[0]);
+      targetPO = posToSearch.find(p => p.po_id === poMatch[0]);
     }
 
     // Check if prompt references a Vendor ID (e.g. V003)
@@ -98,12 +100,17 @@ class RAGEngine {
       targetVendor = scorecards.find(v => v.vendor_id === vId);
     }
 
-    return { targetPO, targetVendor };
+    return { targetPO, targetVendor, posToSearch };
+  }
+
+  // Perform Grounded RAG Analysis with dynamic SAP dataset
+  analyzeQueryWithSapData(query, liveSapPOs) {
+    return this.analyzeQuery(query, liveSapPOs);
   }
 
   // Perform Full Grounded RAG Analysis
-  analyzeQuery(query) {
-    const { targetPO, targetVendor } = this.extractSAPContext(query);
+  analyzeQuery(query, liveSapPOs = null) {
+    const { targetPO, targetVendor, posToSearch } = this.extractSAPContext(query, liveSapPOs);
     const retrievedDocs = this.searchKnowledgeBase(query, 2);
 
     let answerText = "";
@@ -164,7 +171,7 @@ class RAGEngine {
           }
         ];
       } else if (lowerQuery.includes('delayed') || lowerQuery.includes('delay')) {
-        const delayedPOs = PURCHASE_ORDERS.filter(p => p.delay_days > 2);
+        const delayedPOs = posToSearch.filter(p => p.delay_days > 2);
         answerText = `There are currently **${delayedPOs.length} Purchase Orders** with significant delivery delays in SAP S/4HANA: ${delayedPOs.map(p => `PO ${p.po_id} (${p.delay_days} days late)`).join(', ')}.\n\nAsk about any specific PO ID to view full grounded SAP evidence and SLA penalty rules.`;
         evidence = delayedPOs.map(p => ({ key: `PO ${p.po_id}`, value: `${p.vendor_name} (${p.delay_days} days late)` }));
       } else if (retrievedDocs.length > 0) {

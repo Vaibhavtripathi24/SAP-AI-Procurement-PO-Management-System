@@ -11,12 +11,12 @@ const { PURCHASE_ORDERS, VENDORS, getVendorScorecards } = require('./data');
 
 class SAPODataClient {
   constructor() {
-    this.mode = process.env.SAP_INTEGRATION_MODE || 'DEVELOPMENT_MOCK_MODE';
-    this.host = process.env.SAP_GATEWAY_HOST || '';
+    this.mode = process.env.SAP_INTEGRATION_MODE || 'REAL_SAP';
+    this.host = process.env.SAP_GATEWAY_HOST || 'https://merida.cob.csuchico.edu:8038';
     this.servicePath = process.env.SAP_ODATA_SERVICE_PATH || '/sap/opu/odata/sap/ZAI_PROCUREMENT_SRV/';
-    this.user = process.env.SAP_USER || '';
-    this.password = process.env.SAP_PASSWORD || '';
-    this.client = process.env.SAP_CLIENT || '';
+    this.user = process.env.SAP_USER || 'GLBI-117';
+    this.password = process.env.SAP_PASSWORD || 'Bt@123';
+    this.client = process.env.SAP_CLIENT || '105';
     this.csrfToken = null;
 
     console.log(`[SAP ODATA CLIENT] Initialized in mode: [${this.mode}]`);
